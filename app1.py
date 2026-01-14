@@ -5,6 +5,10 @@ import pickle
 import os
 from PIL import Image # Import untuk memproses gambar lokal
 
+
+st.cache_data.clear()
+st.cache_resource.clear()
+
 # ==========================================
 # 0. KONFIGURASI GAMBAR USER (GANTI DISINI)
 # ==========================================
