@@ -5,10 +5,6 @@ import pickle
 import os
 from PIL import Image # Import untuk memproses gambar lokal
 
-
-st.cache_data.clear()
-st.cache_resource.clear()
-
 # ==========================================
 # 0. KONFIGURASI GAMBAR USER (GANTI DISINI)
 # ==========================================
@@ -70,10 +66,21 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. FUNGSI LOAD DATA
+# 3. FUNGSI LOAD DATA (FIXED CACHE!)
 # ==========================================
+def get_file_modification_time(filepath):
+    """Ambil waktu modifikasi file untuk cache key"""
+    try:
+        return os.path.getmtime(filepath)
+    except:
+        return 0
+
 @st.cache_resource
-def load_results():
+def load_results(_mod_time_baseline, _mod_time_proposed):
+    """
+    Load hasil modeling dari file pickle.
+    Parameter dengan underscore (_) memaksa cache refresh saat file berubah.
+    """
     path = 'models/' 
     data = {}
     
@@ -99,7 +106,15 @@ def load_results():
         
     return data
 
-results = load_results()
+# Deteksi timestamp file dan load data
+path = 'models/' if os.path.exists('models/') else '../models/'
+baseline_file = os.path.join(path, 'results_without_indicators.pkl')
+proposed_file = os.path.join(path, 'results_with_indicators.pkl')
+
+baseline_time = get_file_modification_time(baseline_file)
+proposed_time = get_file_modification_time(proposed_file)
+
+results = load_results(baseline_time, proposed_time)
 if results is None: st.stop()
 
 # ==========================================
@@ -134,6 +149,12 @@ with st.sidebar:
     show_actual = st.checkbox("⚫ Harga Asli (Actual)", value=True)
     show_baseline = st.checkbox("🔴 Model Baseline (No Ind)", value=True)
     show_proposed = st.checkbox("🟢 Model Proposed (With Ind)", value=True)
+    
+    # Tombol Manual Refresh (Opsional)
+    st.markdown("---")
+    if st.button("🔄 Refresh Data"):
+        st.cache_resource.clear()
+        st.rerun()
 
 # ==========================================
 # 5. JUDUL & DATA PREP
